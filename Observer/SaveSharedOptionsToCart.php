@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -17,11 +17,13 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\App\RequestInterface;
 use Psr\Log\LoggerInterface;
-// Swapped to your real Option row factory
 use BluePrint3D\SharedProductOptions\Model\OptionFactory;
-// Added junction table factory to check for active product mappings
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\SharedOptionProduct\CollectionFactory as LinkCollectionFactory;
 
+/**
+ * Class SaveSharedOptionsToCart
+ * Saves submitted shared options to quote item custom options and applies dynamic price additions.
+ */
 class SaveSharedOptionsToCart implements ObserverInterface
 {
     /** @var Json */
@@ -39,6 +41,15 @@ class SaveSharedOptionsToCart implements ObserverInterface
     /** @var LinkCollectionFactory */
     protected $linkCollectionFactory;
 
+    /**
+     * SaveSharedOptionsToCart constructor.
+     *
+     * @param Json $serializer
+     * @param RequestInterface $request
+     * @param LoggerInterface $logger
+     * @param OptionFactory $optionFactory
+     * @param LinkCollectionFactory $linkCollectionFactory
+     */
     public function __construct(
         Json $serializer,
         RequestInterface $request,
@@ -53,6 +64,12 @@ class SaveSharedOptionsToCart implements ObserverInterface
         $this->linkCollectionFactory = $linkCollectionFactory;
     }
 
+    /**
+     * Execute observer action
+     *
+     * @param Observer $observer
+     * @return void
+     */
     public function execute(Observer $observer)
     {
         $this->logger->info('=== SaveSharedOptionsToCart START ===');
@@ -84,7 +101,7 @@ class SaveSharedOptionsToCart implements ObserverInterface
         }
 
         // Filter out empty options
-        $sharedOptionsData = array_filter($sharedOptionsData, function($value) {
+        $sharedOptionsData = array_filter($sharedOptionsData, function ($value) {
             return $value !== '' && $value !== null;
         });
 
@@ -112,62 +129,7 @@ class SaveSharedOptionsToCart implements ObserverInterface
             // ----------------------------------------------------
             // 2. FORMAT AND SAVE FOR NATIVE CHECKOUT DISPLAY
             // ----------------------------------------------------
-            $nativeCheckoutOptions = [];
-            $additionalPrice = 0.00;
-
-            foreach ($sharedOptionsData as $optionId => $value) {
-                if (empty($value)) {
-                    continue;
-                }
-
-                // Load the Parent Option using your true OptionFactory
-                $parentOption = $this->optionFactory->create()->load($optionId);
-                if (!$parentOption->getId()) {
-                    continue;
-                }
-
-                $displayValue = $value;
-
-                // Handle select strings labels natively using database structure
-                if (in_array($parentOption->getType(), ['drop_down', 'multiple'])) {
-                    // Normalize singular selections and multi arrays into a clean list loop
-                    $valueArray = is_array($value) ? $value : [$value];
-                    $labels = [];
-
-                    foreach ($valueArray as $childValueId) {
-                        if (empty($childValueId)) {
-                            continue;
-                        }
-
-                        // Load the specific child row choice using OptionFactory
-                        $childOption = $this->optionFactory->create()->load($childValueId);
-                        if ($childOption->getId()) {
-                            $labels[] = $childOption->getTitle();
-
-                            // 3. APPLY PRICING ADJUSTMENTS (Dropdowns/Multi-selects)
-                            $childPrice = (float)$childOption->getPriceModifier();
-                            if ($childPrice > 0) {
-                                $additionalPrice += $childPrice;
-                            }
-                        }
-                    }
-                    $displayValue = implode(', ', $labels);
-                } else {
-                    // 3. APPLY PRICING ADJUSTMENTS (Fields, Areas, Dates)
-                    $parentPrice = (float)$parentOption->getPriceModifier();
-                    if ($parentPrice > 0) {
-                        $additionalPrice += $parentPrice;
-                    }
-                }
-
-                // Add to standard text dictionary for checkout summaries
-                if (!empty($displayValue)) {
-                    $nativeCheckoutOptions[] = [
-                        'label' => $parentOption->getTitle(),
-                        'value' => $displayValue
-                    ];
-                }
-            }
+            [$nativeCheckoutOptions, $additionalPrice] = $this->processSharedOptions($sharedOptionsData);
 
             // Bind the text strings to Magento's native checkout layout option hook
             if (!empty($nativeCheckoutOptions)) {
@@ -200,5 +162,66 @@ class SaveSharedOptionsToCart implements ObserverInterface
         } catch (\Exception $e) {
             $this->logger->error('Exception in Unified SaveSharedOptionsToCart: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Process options to retrieve native display structures and calculate additional prices.
+     *
+     * @param array $sharedOptionsData
+     * @return array [array $nativeCheckoutOptions, float $additionalPrice]
+     */
+    private function processSharedOptions(array $sharedOptionsData): array
+    {
+        $nativeCheckoutOptions = [];
+        $additionalPrice = 0.00;
+
+        foreach ($sharedOptionsData as $optionId => $value) {
+            if (empty($value)) {
+                continue;
+            }
+
+            $parentOption = $this->optionFactory->create()->load($optionId);
+            if (!$parentOption->getId()) {
+                continue;
+            }
+
+            $displayValue = $value;
+
+            if (in_array($parentOption->getType(), ['drop_down', 'multiple'])) {
+                $valueArray = is_array($value) ? $value : [$value];
+                $labels = [];
+
+                foreach ($valueArray as $childValueId) {
+                    if (empty($childValueId)) {
+                        continue;
+                    }
+
+                    $childOption = $this->optionFactory->create()->load($childValueId);
+                    if ($childOption->getId()) {
+                        $labels[] = $childOption->getTitle();
+
+                        $childPrice = (float)$childOption->getPriceModifier();
+                        if ($childPrice > 0) {
+                            $additionalPrice += $childPrice;
+                        }
+                    }
+                }
+                $displayValue = implode(', ', $labels);
+            } else {
+                $parentPrice = (float)$parentOption->getPriceModifier();
+                if ($parentPrice > 0) {
+                    $additionalPrice += $parentPrice;
+                }
+            }
+
+            if (!empty($displayValue)) {
+                $nativeCheckoutOptions[] = [
+                    'label' => $parentOption->getTitle(),
+                    'value' => $displayValue
+                ];
+            }
+        }
+
+        return [$nativeCheckoutOptions, $additionalPrice];
     }
 }

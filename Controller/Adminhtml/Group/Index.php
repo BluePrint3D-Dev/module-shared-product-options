@@ -17,16 +17,34 @@ use Magento\Backend\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\Group\CollectionFactory as GroupCollectionFactory;
 
+/**
+ * Class Index
+ * Main grid index controller for Shared Option Groups.
+ */
 class Index extends Action
 {
     /**
      * Authority gate: checks ACL permission key matching menu.xml
      */
-    const ADMIN_RESOURCE = 'BluePrint3D_SharedProductOptions::group';
+    public const ADMIN_RESOURCE = 'BluePrint3D_SharedProductOptions::group';
 
+    /**
+     * @var PageFactory
+     */
     protected $resultPageFactory;
+
+    /**
+     * @var GroupCollectionFactory
+     */
     protected $groupCollectionFactory;
 
+    /**
+     * Index constructor.
+     *
+     * @param Context $context
+     * @param PageFactory $resultPageFactory
+     * @param GroupCollectionFactory $groupCollectionFactory
+     */
     public function __construct(
         Context $context,
         PageFactory $resultPageFactory,
@@ -39,13 +57,16 @@ class Index extends Action
 
     /**
      * Process page request and set up dashboard layout window parameters
+     *
+     * @return \Magento\Framework\View\Result\Page
      */
     public function execute()
     {
         if ($this->isLimitReached()) {
-            $this->messageManager->addNoticeMessage(
-                __('⚠️ You have reached your Free Tier limit (6/6). You cannot create any more shared option groups. Click "Upgrade to Pro" to unlock unlimited groups and advanced merchandising tools!')
-            );
+            $msg = __('⚠️ You have reached your Free Tier limit (6/6). ') .
+                __('You cannot create any more shared option groups. ') .
+                __('Click "Upgrade to Pro" to unlock unlimited groups and advanced merchandising tools!');
+            $this->messageManager->addNoticeMessage($msg);
         }
 
         $resultPage = $this->resultPageFactory->create();
@@ -57,6 +78,11 @@ class Index extends Action
         return $resultPage;
     }
 
+    /**
+     * Check if free tier limit is reached
+     *
+     * @return bool
+     */
     public function isLimitReached(): bool
     {
         return $this->groupCollectionFactory->create()->getSize() >= 6;

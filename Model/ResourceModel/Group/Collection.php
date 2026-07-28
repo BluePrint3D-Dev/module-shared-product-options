@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -16,15 +16,21 @@ use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 use BluePrint3D\SharedProductOptions\Model\Group as ModelGroup;
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\Group as ResourceGroup;
 
+/**
+ * Class Collection
+ * Collection for Group resource model.
+ */
 class Collection extends AbstractCollection
 {
     /**
-     * Define primary field identification keys
+     * @var string
      */
     protected $_idFieldName = 'group_id';
 
     /**
      * Link the collection to the Model and ResourceModel definitions
+     *
+     * @return void
      */
     protected function _construct()
     {

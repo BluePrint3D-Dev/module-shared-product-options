@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -16,12 +16,25 @@ use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use BluePrint3D\SharedProductOptions\Model\GroupFactory;
 
+/**
+ * Class Delete
+ * Controller for deleting Shared Product Option Groups in admin.
+ */
 class Delete extends Action
 {
-    const ADMIN_RESOURCE = 'BluePrint3D_SharedProductOptions::group';
+    public const ADMIN_RESOURCE = 'BluePrint3D_SharedProductOptions::group';
 
+    /**
+     * @var GroupFactory
+     */
     protected $groupFactory;
 
+    /**
+     * Delete constructor.
+     *
+     * @param Context $context
+     * @param GroupFactory $groupFactory
+     */
     public function __construct(
         Context $context,
         GroupFactory $groupFactory
@@ -30,6 +43,11 @@ class Delete extends Action
         $this->groupFactory = $groupFactory;
     }
 
+    /**
+     * Execute action
+     *
+     * @return \Magento\Framework\Controller\Result\Redirect
+     */
     public function execute()
     {
         $resultRedirect = $this->resultRedirectFactory->create();
@@ -43,7 +61,8 @@ class Delete extends Action
                 // Nuke the parent record out of blueprint3d_shared_option_group
                 $model->delete();
 
-                $this->messageManager->addSuccessMessage(__('The shared product option group has been successfully deleted.'));
+                $msg = __('The shared product option group has been successfully deleted.');
+                $this->messageManager->addSuccessMessage($msg);
                 return $resultRedirect->setPath('*/*/');
             } catch (\Exception $e) {
                 $this->messageManager->addErrorMessage($e->getMessage());

@@ -10,9 +10,22 @@ use BluePrint3D\SharedProductOptions\Model\ResourceModel\Group\CollectionFactory
 
 class AddButton implements ButtonProviderInterface
 {
+    /**
+     * @var Context
+     */
     protected $context;
+
+    /**
+     * @var GroupCollectionFactory
+     */
     protected $groupCollectionFactory;
 
+    /**
+     * AddButton constructor.
+     *
+     * @param Context $context
+     * @param GroupCollectionFactory $groupCollectionFactory
+     */
     public function __construct(
         Context $context,
         GroupCollectionFactory $groupCollectionFactory
@@ -21,6 +34,11 @@ class AddButton implements ButtonProviderInterface
         $this->groupCollectionFactory = $groupCollectionFactory;
     }
 
+    /**
+     * Retrieve button data
+     *
+     * @return array
+     */
     public function getButtonData()
     {
         if ($this->isLimitReached()) {
@@ -35,6 +53,11 @@ class AddButton implements ButtonProviderInterface
         ];
     }
 
+    /**
+     * Check if the free tier limit is reached
+     *
+     * @return bool
+     */
     public function isLimitReached(): bool
     {
         return $this->groupCollectionFactory->create()->getSize() >= 6;

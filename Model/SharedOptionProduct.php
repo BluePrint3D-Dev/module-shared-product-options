@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -14,8 +14,17 @@ namespace BluePrint3D\SharedProductOptions\Model;
 
 use Magento\Framework\Model\AbstractModel;
 
+/**
+ * Class SharedOptionProduct
+ * Model for shared option product relation entity.
+ */
 class SharedOptionProduct extends AbstractModel
 {
+    /**
+     * Model initialization
+     *
+     * @return void
+     */
     protected function _construct()
     {
         $this->_init(\BluePrint3D\SharedProductOptions\Model\ResourceModel\SharedOptionProduct::class);

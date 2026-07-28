@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -16,16 +16,41 @@ use Magento\Catalog\Ui\DataProvider\Product\Form\ProductDataProvider;
 use Magento\Framework\App\ResourceConnection;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Class ProductDataProviderPlugin
+ * Hydrates assigned shared option group IDs into the product edit form UI component.
+ */
 class ProductDataProviderPlugin
 {
+    /**
+     * @var ResourceConnection
+     */
     protected $resourceConnection;
+
+    /**
+     * @var LoggerInterface
+     */
     protected $logger;
 
-    public function __construct(ResourceConnection $resourceConnection, LoggerInterface $logger) {
+    /**
+     * ProductDataProviderPlugin constructor.
+     *
+     * @param ResourceConnection $resourceConnection
+     * @param LoggerInterface $logger
+     */
+    public function __construct(ResourceConnection $resourceConnection, LoggerInterface $logger)
+    {
         $this->resourceConnection = $resourceConnection;
         $this->logger = $logger;
     }
 
+    /**
+     * Inject assigned shared option group IDs into product UI form data
+     *
+     * @param ProductDataProvider $subject
+     * @param array $result
+     * @return array
+     */
     public function afterGetData(ProductDataProvider $subject, $result)
     {
         if (empty($result)) {
@@ -50,7 +75,9 @@ class ProductDataProviderPlugin
             // ui-select with multiple=true expects an array of strings
             $selectedIds = array_map('strval', $selectedIds);
 
-            $this->logger->info("=== DataProvider Injecting for Product ID {$productId}: " . json_encode($selectedIds) . " ===");
+            $this->logger->info(
+                "=== DataProvider Injecting for Product ID {$productId}: " . json_encode($selectedIds) . " ==="
+            );
 
             if (!isset($result[$productId]['product'])) {
                 $result[$productId]['product'] = [];

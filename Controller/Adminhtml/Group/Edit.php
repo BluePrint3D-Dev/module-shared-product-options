@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -16,12 +16,25 @@ use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
 
+/**
+ * Class Edit
+ * Controller for editing/creating Shared Product Option Groups in admin.
+ */
 class Edit extends Action
 {
-    const ADMIN_RESOURCE = 'BluePrint3D_SharedProductOptions::group';
+    public const ADMIN_RESOURCE = 'BluePrint3D_SharedProductOptions::group';
 
+    /**
+     * @var PageFactory
+     */
     protected $resultPageFactory;
 
+    /**
+     * Edit constructor.
+     *
+     * @param Context $context
+     * @param PageFactory $resultPageFactory
+     */
     public function __construct(
         Context $context,
         PageFactory $resultPageFactory
@@ -30,6 +43,11 @@ class Edit extends Action
         $this->resultPageFactory = $resultPageFactory;
     }
 
+    /**
+     * Execute action
+     *
+     * @return \Magento\Framework\View\Result\Page
+     */
     public function execute()
     {
         $resultPage = $this->resultPageFactory->create();

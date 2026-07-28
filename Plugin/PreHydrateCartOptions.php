@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -16,16 +16,26 @@ use Magento\Catalog\Model\Product\Type\AbstractType;
 use Magento\Framework\DataObject;
 use Magento\Catalog\Model\Product;
 
+/**
+ * Class PreHydrateCartOptions
+ * Pre-hydrates shared options on the product before Magento processes the add-to-cart request.
+ */
 class PreHydrateCartOptions
 {
     /**
      * Force option model hydration before Magento evaluates the has_options flag during add-to-cart execution
+     *
+     * @param AbstractType $subject
+     * @param DataObject $buyRequest
+     * @param Product $product
+     * @param string|null $processMode
+     * @return array
      */
     public function beforePrepareForCartAdvanced(
         AbstractType $subject,
         DataObject $buyRequest,
         Product $product,
-                     $processMode = null
+        $processMode = null
     ) {
         if (!$product || !$product->getId()) {
             return [$buyRequest, $product, $processMode];

@@ -20,17 +20,51 @@ use Magento\Framework\App\Area as AppArea;
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\Group as GroupResource;
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\Option\CollectionFactory as OptionCollectionFactory;
 
+/**
+ * Class InjectSharedOptionsBlock
+ * Injects shared product options into Magento catalog products on the frontend.
+ */
 class InjectSharedOptionsBlock
 {
+    /**
+     * @var GroupResource
+     */
     protected $groupResource;
+
+    /**
+     * @var OptionCollectionFactory
+     */
     protected $optionCollectionFactory;
+
+    /**
+     * @var OptionFactory
+     */
     protected $optionFactory;
+
+    /**
+     * @var OptionValueFactory
+     */
     protected $optionValueFactory;
+
+    /**
+     * @var AppState
+     */
     protected $appState;
 
-    // High integer offset to prevent database collisions
+    /**
+     * High integer offset to prevent database collisions
+     */
     private const SHARED_OPTION_OFFSET = 999000;
 
+    /**
+     * InjectSharedOptionsBlock constructor.
+     *
+     * @param GroupResource $groupResource
+     * @param OptionCollectionFactory $optionCollectionFactory
+     * @param OptionFactory $optionFactory
+     * @param OptionValueFactory $optionValueFactory
+     * @param AppState $appState
+     */
     public function __construct(
         GroupResource $groupResource,
         OptionCollectionFactory $optionCollectionFactory,
@@ -46,8 +80,11 @@ class InjectSharedOptionsBlock
     }
 
     /**
-     * Intercept hasOptions check to ensure Magento renders the option container
-     * even if the product has 0 native custom options in the DB.
+     * Intercept hasOptions check to ensure option container renders when shared options exist.
+     *
+     * @param Product $product
+     * @param bool $result
+     * @return bool
      */
     public function afterHasOptions(Product $product, $result)
     {
@@ -65,6 +102,10 @@ class InjectSharedOptionsBlock
 
     /**
      * Alias check for getHasOptions
+     *
+     * @param Product $product
+     * @param bool $result
+     * @return bool
      */
     public function afterGetHasOptions(Product $product, $result)
     {
@@ -73,6 +114,10 @@ class InjectSharedOptionsBlock
 
     /**
      * Inject shared options directly into the product model whenever options are retrieved on the frontend
+     *
+     * @param Product $product
+     * @param array|null $existingOptions
+     * @return array
      */
     public function afterGetOptions(Product $product, $existingOptions)
     {
@@ -175,7 +220,12 @@ class InjectSharedOptionsBlock
     }
 
     /**
-     * Intercept getOptionById to return our injected memory options instead of executing raw SQL database queries
+     * Intercept getOptionById to return injected memory options instead of raw SQL queries
+     *
+     * @param Product $product
+     * @param \Closure $proceed
+     * @param int|string $optionId
+     * @return mixed
      */
     public function aroundGetOptionById(Product $product, \Closure $proceed, $optionId)
     {
@@ -199,6 +249,8 @@ class InjectSharedOptionsBlock
 
     /**
      * Determine if the request is executing in the Admin Panel or via CLI compile commands
+     *
+     * @return bool
      */
     private function isAdminOrCli(): bool
     {

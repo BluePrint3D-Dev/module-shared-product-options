@@ -10,15 +10,30 @@ namespace BluePrint3D\SharedProductOptions\Model\ResourceModel;
 
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 
+/**
+ * Class Group
+ * Resource model for option group entity.
+ */
 class Group extends AbstractDb
 {
     private const PRODUCT_RELATION_TABLE = 'blueprint3d_shared_option_product';
 
+    /**
+     * Resource initialization
+     *
+     * @return void
+     */
     protected function _construct()
     {
         $this->_init('blueprint3d_shared_option_group', 'group_id');
     }
 
+    /**
+     * Get assigned product IDs for a given group ID
+     *
+     * @param int $groupId
+     * @return array
+     */
     public function getAssignedProductIds(int $groupId): array
     {
         if (!$groupId) {
@@ -33,6 +48,14 @@ class Group extends AbstractDb
         return array_map('intval', $connection->fetchCol($select));
     }
 
+    /**
+     * Assign products to group
+     *
+     * @param int $groupId
+     * @param array $productIds
+     * @return $this
+     * @throws \Exception
+     */
     public function assignProductsToGroup(int $groupId, array $productIds): self
     {
         $connection = $this->getConnection();
@@ -77,6 +100,9 @@ class Group extends AbstractDb
     /**
      * Fetch array of group IDs currently assigned to a product
      * (CRITICAL for the Frontend Injector!)
+     *
+     * @param int $productId
+     * @return array
      */
     public function getAssignedGroupIds(int $productId): array
     {

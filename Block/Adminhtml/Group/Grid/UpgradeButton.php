@@ -6,8 +6,17 @@ namespace BluePrint3D\SharedProductOptions\Block\Adminhtml\Group\Grid;
 
 use Magento\Framework\View\Element\UiComponent\Control\ButtonProviderInterface;
 
+/**
+ * Class UpgradeButton
+ * Provides the "Upgrade to Pro" button for the grid toolbar.
+ */
 class UpgradeButton implements ButtonProviderInterface
 {
+    /**
+     * Retrieve button data configuration
+     *
+     * @return array
+     */
     public function getButtonData()
     {
         return [

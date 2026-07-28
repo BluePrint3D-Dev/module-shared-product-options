@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -20,14 +20,46 @@ use Magento\Framework\Indexer\CacheContextFactory;
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\SharedOptionProduct\CollectionFactory as LinkCollectionFactory;
 use BluePrint3D\SharedProductOptions\Model\OptionFactory;
 
+/**
+ * Class CacheInvalidatorPlugin
+ * Invalidates cache for products linked to modified or deleted shared option groups/options.
+ */
 class CacheInvalidatorPlugin
 {
+    /**
+     * @var LinkCollectionFactory
+     */
     protected $linkCollectionFactory;
+
+    /**
+     * @var OptionFactory
+     */
     protected $optionFactory;
+
+    /**
+     * @var CacheInterface
+     */
     protected $cache;
+
+    /**
+     * @var EventManager
+     */
     protected $eventManager;
+
+    /**
+     * @var CacheContextFactory
+     */
     protected $cacheContextFactory;
 
+    /**
+     * CacheInvalidatorPlugin constructor.
+     *
+     * @param LinkCollectionFactory $linkCollectionFactory
+     * @param OptionFactory $optionFactory
+     * @param CacheInterface $cache
+     * @param EventManager $eventManager
+     * @param CacheContextFactory $cacheContextFactory
+     */
     public function __construct(
         LinkCollectionFactory $linkCollectionFactory,
         OptionFactory $optionFactory,
@@ -44,6 +76,11 @@ class CacheInvalidatorPlugin
 
     /**
      * Intercept the save action of Groups and Options
+     *
+     * @param mixed $subject
+     * @param mixed $result
+     * @param AbstractModel $model
+     * @return mixed
      */
     public function afterSave($subject, $result, AbstractModel $model)
     {
@@ -56,6 +93,10 @@ class CacheInvalidatorPlugin
 
     /**
      * Intercept the delete action of Groups and Options (runs BEFORE delete while DB relations exist!)
+     *
+     * @param mixed $subject
+     * @param AbstractModel $model
+     * @return void
      */
     public function beforeDelete($subject, AbstractModel $model)
     {
@@ -67,21 +108,20 @@ class CacheInvalidatorPlugin
 
     /**
      * Resolve the primary Group ID from the model (handles both Group and Option models)
+     *
+     * @param AbstractModel $model
+     * @return int|null
      */
     private function getGroupIdFromModel(AbstractModel $model): ?int
     {
         $groupId = null;
 
-        // A. If the model is a Group
         if ($model instanceof \BluePrint3D\SharedProductOptions\Model\Group) {
             $groupId = (int)$model->getId();
-        }
-        // B. If the model is an Option/Sub-option
-        elseif ($model instanceof \BluePrint3D\SharedProductOptions\Model\Option) {
+        } elseif ($model instanceof \BluePrint3D\SharedProductOptions\Model\Option) {
             $groupId = (int)$model->getGroupId();
 
-            // If it's a sub-option child value (parent_id > 0), it won't have group_id directly.
-            // We load the parent option to retrieve its group_id
+            // If it's a sub-option child value (parent_id > 0), load parent to retrieve group_id
             if (!$groupId && $model->getParentId()) {
                 $parentOptionId = (int)$model->getParentId();
                 $parentOption = $this->optionFactory->create()->load($parentOptionId);
@@ -96,6 +136,9 @@ class CacheInvalidatorPlugin
 
     /**
      * Fetch all mapped product IDs for this group and invalidate their cache tags globally
+     *
+     * @param int $groupId
+     * @return void
      */
     private function invalidateCacheByGroupId(int $groupId): void
     {

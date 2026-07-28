@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -16,6 +16,10 @@ use Magento\Framework\View\Element\UiComponent\Control\ButtonProviderInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\UrlInterface;
 
+/**
+ * Class DeleteButton
+ * Provides the Delete button configuration for the group edit page.
+ */
 class DeleteButton implements ButtonProviderInterface
 {
     /**
@@ -40,6 +44,11 @@ class DeleteButton implements ButtonProviderInterface
         $this->urlBuilder = $urlBuilder;
     }
 
+    /**
+     * Get button data configuration
+     *
+     * @return array
+     */
     public function getButtonData()
     {
         $data = [];
@@ -50,8 +59,8 @@ class DeleteButton implements ButtonProviderInterface
                 'label' => __('Delete Group'),
                 'class' => 'delete',
                 'on_click' => 'deleteConfirm(\'' . __(
-                        'Are you sure you want to delete this option group?'
-                    ) . '\', \'' . $this->getDeleteUrl($id) . '\', {"data": {}})',
+                    'Are you sure you want to delete this option group?'
+                ) . '\', \'' . $this->getDeleteUrl($id) . '\', {"data": {}})',
                 'sort_order' => 20,
             ];
         }
@@ -60,6 +69,9 @@ class DeleteButton implements ButtonProviderInterface
 
     /**
      * Generate the backend URL path for the delete executor action
+     *
+     * @param int|string $id
+     * @return string
      */
     public function getDeleteUrl($id)
     {

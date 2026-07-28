@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -13,19 +13,34 @@
 namespace BluePrint3D\SharedProductOptions\ViewModel;
 
 use Magento\Framework\View\Element\Block\ArgumentInterface;
-// Swapped out the old ghost collection factory for your real surviving entry factory
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\Option\CollectionFactory as OptionCollectionFactory;
 
+/**
+ * Class SharedOptions
+ * ViewModel for retrieving shared option tree structures on frontend templates.
+ */
 class SharedOptions implements ArgumentInterface
 {
+    /**
+     * @var OptionCollectionFactory
+     */
     protected $optionCollectionFactory;
 
-    public function __construct(OptionCollectionFactory $optionCollectionFactory) {
+    /**
+     * SharedOptions constructor.
+     *
+     * @param OptionCollectionFactory $optionCollectionFactory
+     */
+    public function __construct(OptionCollectionFactory $optionCollectionFactory)
+    {
         $this->optionCollectionFactory = $optionCollectionFactory;
     }
 
     /**
      * Fetch complete tree structures for multiple Option Groups at once
+     *
+     * @param array $groupIds
+     * @return array
      */
     public function getOptionsByGroupIds(array $groupIds): array
     {

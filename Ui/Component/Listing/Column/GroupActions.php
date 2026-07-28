@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -18,10 +18,26 @@ use Magento\Framework\View\Element\UiComponentFactory;
 use Magento\Framework\View\Element\UiComponent\ContextInterface;
 use Magento\Framework\UrlInterface;
 
+/**
+ * Class GroupActions
+ * Action column UI component for the Shared Option Groups grid.
+ */
 class GroupActions extends Column
 {
+    /**
+     * @var UrlInterface
+     */
     protected $urlBuilder;
 
+    /**
+     * GroupActions constructor.
+     *
+     * @param ContextInterface $context
+     * @param UiComponentFactory $uiComponentFactory
+     * @param UrlInterface $urlBuilder
+     * @param array $components
+     * @param array $data
+     */
     public function __construct(
         ContextInterface $context,
         UiComponentFactory $uiComponentFactory,
@@ -35,6 +51,9 @@ class GroupActions extends Column
 
     /**
      * Prepare Data Source - Inject dynamic Edit URLs into the grid row actions column
+     *
+     * @param array $data
+     * @return array
      */
     public function prepareDataSource(array $data)
     {

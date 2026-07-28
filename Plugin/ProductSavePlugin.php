@@ -14,12 +14,34 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\ResourceConnection;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Class ProductSavePlugin
+ * Saves assigned shared option groups when editing a product in admin.
+ */
 class ProductSavePlugin
 {
+    /**
+     * @var RequestInterface
+     */
     protected $request;
+
+    /**
+     * @var ResourceConnection
+     */
     protected $resourceConnection;
+
+    /**
+     * @var LoggerInterface
+     */
     protected $logger;
 
+    /**
+     * ProductSavePlugin constructor.
+     *
+     * @param RequestInterface $request
+     * @param ResourceConnection $resourceConnection
+     * @param LoggerInterface $logger
+     */
     public function __construct(
         RequestInterface $request,
         ResourceConnection $resourceConnection,
@@ -30,6 +52,14 @@ class ProductSavePlugin
         $this->logger = $logger;
     }
 
+    /**
+     * Intercept catalog product save to persist assigned shared option groups
+     *
+     * @param ProductResource $subject
+     * @param mixed $result
+     * @param AbstractModel $product
+     * @return mixed
+     */
     public function afterSave(ProductResource $subject, $result, AbstractModel $product)
     {
         // Safeguard: Only execute on full product saves (ignores API/Grid inline edits)
@@ -81,6 +111,13 @@ class ProductSavePlugin
         return $result;
     }
 
+    /**
+     * Search recursively for a key inside a nested array
+     *
+     * @param array $array
+     * @param string $searchKey
+     * @return mixed|null
+     */
     private function findKeyRecursively(array $array, string $searchKey)
     {
         if (array_key_exists($searchKey, $array)) {

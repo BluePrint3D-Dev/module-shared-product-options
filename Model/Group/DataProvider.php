@@ -16,11 +16,33 @@ use Magento\Ui\DataProvider\AbstractDataProvider;
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\Group\CollectionFactory;
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\Option\CollectionFactory as OptionCollectionFactory;
 
+/**
+ * Class DataProvider
+ * UI DataProvider for the Shared Product Options Group edit form.
+ */
 class DataProvider extends AbstractDataProvider
 {
+    /**
+     * @var array
+     */
     protected $loadedData;
+
+    /**
+     * @var OptionCollectionFactory
+     */
     protected $optionCollectionFactory;
 
+    /**
+     * DataProvider constructor.
+     *
+     * @param string $name
+     * @param string $primaryFieldName
+     * @param string $requestFieldName
+     * @param CollectionFactory $collectionFactory
+     * @param OptionCollectionFactory $optionCollectionFactory
+     * @param array $meta
+     * @param array $data
+     */
     public function __construct(
         $name,
         $primaryFieldName,
@@ -35,6 +57,11 @@ class DataProvider extends AbstractDataProvider
         parent::__construct($name, $primaryFieldName, $requestFieldName, $meta, $data);
     }
 
+    /**
+     * Get data for UI components
+     *
+     * @return array
+     */
     public function getData()
     {
         if (isset($this->loadedData)) {
