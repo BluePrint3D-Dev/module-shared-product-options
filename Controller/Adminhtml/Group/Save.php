@@ -18,6 +18,7 @@ use BluePrint3D\SharedProductOptions\Model\GroupFactory;
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\Group\CollectionFactory as GroupCollectionFactory;
 use BluePrint3D\SharedProductOptions\Model\OptionFactory;
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\Option\CollectionFactory as OptionCollectionFactory;
+use BluePrint3D\SharedProductOptions\Model\ResourceModel\Group as GroupResource;
 
 class Save extends Action
 {
@@ -27,19 +28,22 @@ class Save extends Action
     protected $groupCollectionFactory;
     protected $optionFactory;
     protected $optionCollectionFactory;
+    protected $groupResource;
 
     public function __construct(
         Context $context,
         GroupFactory $groupFactory,
         GroupCollectionFactory $groupCollectionFactory,
         OptionFactory $optionFactory,
-        OptionCollectionFactory $optionCollectionFactory
+        OptionCollectionFactory $optionCollectionFactory,
+        GroupResource $groupResource
     ) {
         parent::__construct($context);
         $this->groupFactory = $groupFactory;
         $this->groupCollectionFactory = $groupCollectionFactory;
         $this->optionFactory = $optionFactory;
         $this->optionCollectionFactory = $optionCollectionFactory;
+        $this->groupResource = $groupResource;
     }
 
     public function execute()
@@ -59,23 +63,48 @@ class Save extends Action
             }
 
             // --- FREE TIER LIMITATION CHECK ---
-            // If creating a NEW group (not editing an existing group), enforce the 6-group limit.
-            if (!$id) {
-                $groupCollection = $this->groupCollectionFactory->create();
-                if ($groupCollection->getSize() >= 6) {
-                    $this->messageManager->addErrorMessage(
-                        __('Free Version Limit Reached: You can create up to 6 shared option groups in the free edition. Upgrade to BluePrint3D Shared Options Pro to create unlimited groups.')
-                    );
-                    return $resultRedirect->setPath('*/*/');
+            if (!$id && $this->isLimitReached()) {
+                $this->messageManager->addErrorMessage(
+                    __('Free Tier Limit Reached (6/6). You are growing fast! Upgrade to BluePrint3D Shared Options Pro to unlock unlimited groups, percentage pricing, targeted visibility, and dynamic image switching. Get your license today at: https://blueprint3d.dev/pro')
+                );
+                return $resultRedirect->setPath('*/*/');
+            }
+
+            // Map base group fields dynamically
+            foreach ($data as $key => $value) {
+                // Skip the complex structural arrays that are processed later in the file
+                if ($key === 'option_values' || $key === 'assigned_products' || $key === 'general') {
+                    continue;
+                }
+
+                // If it's an array (like a UI Multiselect), flatten it to a comma-separated string
+                if (is_array($value)) {
+                    $model->setData($key, implode(',', $value));
+                } else {
+                    $model->setData($key, $value);
                 }
             }
 
-            // Map base group fields safely
-            $model->setData('title', !empty($data['title']) ? $data['title'] : '');
+            // Fallback for title just in case
+            if (!$model->getData('title')) {
+                $model->setData('title', '');
+            }
 
             try {
                 $model->save();
-                $groupId = $model->getId();
+                $groupId = (int)$model->getId();
+
+                // --- SAVE PRODUCT ASSIGNMENTS FROM PRO GRID ---
+                $assignedProducts = $data['general']['assigned_products'] ?? null;
+
+                if ($assignedProducts !== null && $assignedProducts !== '') {
+                    $productIds = [];
+                    $decoded = json_decode((string)$assignedProducts, true);
+                    if (is_array($decoded)) {
+                        $productIds = array_keys($decoded);
+                    }
+                    $this->groupResource->assignProductsToGroup($groupId, $productIds);
+                }
 
                 if (isset($data['option_values']) && is_array($data['option_values'])) {
 
@@ -111,6 +140,15 @@ class Save extends Action
                             'placeholder'    => !empty($row['placeholder']) ? $row['placeholder'] : null,
                             'sort_order'     => $position++
                         ]);
+
+                        // B3D FIX: Merge any dynamic fields (like price_type from Pro) seamlessly
+                        foreach ($row as $rKey => $rVal) {
+                            // Block the primary key so Magento is forced to INSERT instead of UPDATE!
+                            if ($rKey !== 'item_id' && !is_array($rVal) && !$optionModel->hasData($rKey)) {
+                                $optionModel->setData($rKey, $rVal);
+                            }
+                        }
+
                         $optionModel->save();
                         $parentOptionId = $optionModel->getId();
 
@@ -143,6 +181,15 @@ class Save extends Action
                                     'sku_modifier'   => null,
                                     'sort_order'     => $subPosition++
                                 ]);
+
+                                // B3D FIX: Merge dynamic sub-option fields (like price_type from Pro) seamlessly
+                                foreach ($valueRow as $vrKey => $vrVal) {
+                                    // Block the child primary key!
+                                    if ($vrKey !== 'value_id' && !is_array($vrVal) && !$valueModel->hasData($vrKey)) {
+                                        $valueModel->setData($vrKey, $vrVal);
+                                    }
+                                }
+
                                 $valueModel->save();
                             }
                         }
@@ -159,5 +206,16 @@ class Save extends Action
         }
 
         return $resultRedirect->setPath('*/*/');
+    }
+
+    /**
+     * Check if the free tier limit of 6 groups has been reached.
+     *
+     * @return bool
+     */
+    public function isLimitReached(): bool
+    {
+        $groupCollection = $this->groupCollectionFactory->create();
+        return $groupCollection->getSize() >= 6;
     }
 }

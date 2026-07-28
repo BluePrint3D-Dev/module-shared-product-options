@@ -27,7 +27,7 @@
     <fieldset name="container_shared_options" sortOrder="100">
         <settings>
             <collapsible>true</collapsible>
-            <label translate="true">Blueprint3D Shared Options</label>
+            <label translate="true">BluePrint3D Shared Options</label>
         </settings>
         <field name="shared_option_groups" component="Magento_Ui/js/form/element/ui-select" formElement="select">
             <argument name="data" xsi:type="array">

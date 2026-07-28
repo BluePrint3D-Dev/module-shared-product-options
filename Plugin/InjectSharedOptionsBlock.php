@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -17,12 +17,12 @@ use Magento\Catalog\Model\Product\OptionFactory;
 use Magento\Catalog\Model\Product\Option\ValueFactory as OptionValueFactory;
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\App\Area as AppArea;
-use BluePrint3D\SharedProductOptions\Model\ResourceModel\SharedOptionProduct\CollectionFactory as LinkCollectionFactory;
+use BluePrint3D\SharedProductOptions\Model\ResourceModel\Group as GroupResource;
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\Option\CollectionFactory as OptionCollectionFactory;
 
 class InjectSharedOptionsBlock
 {
-    protected $linkCollectionFactory;
+    protected $groupResource;
     protected $optionCollectionFactory;
     protected $optionFactory;
     protected $optionValueFactory;
@@ -32,17 +32,43 @@ class InjectSharedOptionsBlock
     private const SHARED_OPTION_OFFSET = 999000;
 
     public function __construct(
-        LinkCollectionFactory $linkCollectionFactory,
+        GroupResource $groupResource,
         OptionCollectionFactory $optionCollectionFactory,
         OptionFactory $optionFactory,
         OptionValueFactory $optionValueFactory,
         AppState $appState
     ) {
-        $this->linkCollectionFactory = $linkCollectionFactory;
+        $this->groupResource = $groupResource;
         $this->optionCollectionFactory = $optionCollectionFactory;
         $this->optionFactory = $optionFactory;
         $this->optionValueFactory = $optionValueFactory;
         $this->appState = $appState;
+    }
+
+    /**
+     * Intercept hasOptions check to ensure Magento renders the option container
+     * even if the product has 0 native custom options in the DB.
+     */
+    public function afterHasOptions(Product $product, $result)
+    {
+        if ($result) {
+            return true;
+        }
+
+        if ($this->isAdminOrCli() || !$product || !$product->getId()) {
+            return $result;
+        }
+
+        $groupIds = $this->groupResource->getAssignedGroupIds((int)$product->getId());
+        return !empty($groupIds);
+    }
+
+    /**
+     * Alias check for getHasOptions
+     */
+    public function afterGetHasOptions(Product $product, $result)
+    {
+        return $this->afterHasOptions($product, $result);
     }
 
     /**
@@ -71,25 +97,14 @@ class InjectSharedOptionsBlock
         // Set the injection guard flag immediately
         $product->setData('shared_options_injected', true);
 
-        // 1. Look up ALL relational mapping records for this product
-        $linkCollection = $this->linkCollectionFactory->create()
-            ->addFieldToFilter('product_id', (int)$product->getId());
-
-        if ($linkCollection->getSize() === 0) {
-            return $existingOptions;
-        }
-
-        // 2. Collect assigned Group IDs
-        $groupIds = [];
-        foreach ($linkCollection as $link) {
-            $groupIds[] = (int)$link->getGroupId();
-        }
+        // 1. Fetch array of assigned group IDs directly from database
+        $groupIds = $this->groupResource->getAssignedGroupIds((int)$product->getId());
 
         if (empty($groupIds)) {
             return $existingOptions;
         }
 
-        // 3. Fetch ONLY MASTER option rows (parent_id = 0) matching our collected Group IDs
+        // 2. Fetch ONLY MASTER option rows (parent_id = 0) matching our collected Group IDs
         $itemCollection = $this->optionCollectionFactory->create()
             ->addFieldToFilter('group_id', ['in' => $groupIds])
             ->addFieldToFilter('parent_id', 0)
@@ -99,7 +114,7 @@ class InjectSharedOptionsBlock
             return $existingOptions;
         }
 
-        // 4. Hydrate and push master items directly into product memory cache
+        // 3. Hydrate and push master items directly into product memory cache
         foreach ($itemCollection as $sharedItem) {
             /** @var \Magento\Catalog\Model\Product\Option $option */
             $option = $this->optionFactory->create();
@@ -114,11 +129,12 @@ class InjectSharedOptionsBlock
                 ->setType($optionType)
                 ->setIsRequire((bool)$sharedItem->getIsRequired())
                 ->setPrice((float)$sharedItem->getPriceModifier())
-                ->setPriceType('fixed')
-                ->setMaxCharacters((int)$sharedItem->getMaxCharacters())
+                // B3D FIX: Dynamically assign price_type from database
+                ->setPriceType($sharedItem->getData('price_type') ?: 'fixed')
+                ->setMaxCharacters((int)$sharedItem->getData('max_characters'))
                 ->setSku($sharedItem->getSkuModifier())
                 ->setSortOrder((int)$sharedItem->getSortOrder())
-                ->setData('placeholder', $sharedItem->getData('placeholder')); // <-- NEW: Hydrates the custom placeholder string
+                ->setData('placeholder', $sharedItem->getData('placeholder'));
 
             // If this is a selection field, load and nest its child rows natively
             if (in_array($optionType, ['drop_down', 'multiple'])) {
@@ -138,7 +154,8 @@ class InjectSharedOptionsBlock
                         ->setId($fakeValueId)
                         ->setTitle($subItem->getTitle())
                         ->setPrice((float)$subItem->getPriceModifier())
-                        ->setPriceType('fixed')
+                        // B3D FIX: Dynamically assign price_type from database
+                        ->setPriceType($subItem->getData('price_type') ?: 'fixed')
                         ->setSku($subItem->getSkuModifier())
                         ->setSortOrder((int)$subItem->getSortOrder());
 

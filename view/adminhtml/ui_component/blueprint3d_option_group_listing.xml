@@ -20,12 +20,10 @@
     </argument>
 
     <settings>
+        <!-- REPLACED STATIC BUTTON WITH DYNAMIC PROVIDERS -->
         <buttons>
-            <button name="add">
-                <url path="*/*/new"/>
-                <class>primary</class>
-                <label translate="true">Add New Group</label>
-            </button>
+            <button name="upgrade_pro" class="BluePrint3D\SharedProductOptions\Block\Adminhtml\Group\Grid\UpgradeButton"/>
+            <button name="add" class="BluePrint3D\SharedProductOptions\Block\Adminhtml\Group\Grid\AddButton"/>
         </buttons>
         <spinner>blueprint3d_option_group_columns</spinner>
         <deps>

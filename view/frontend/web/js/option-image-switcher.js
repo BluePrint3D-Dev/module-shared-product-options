@@ -39,7 +39,6 @@ define([
 
             // Activate lock immediately
             isSetup = true;
-            console.log("STU DEBUG: Switcher successfully connected to Fotorama gallery engine!", fotorama.data);
 
             var defaultIndex = fotorama.activeframe ? fotorama.data.indexOf(fotorama.activeframe) : 0;
             if (defaultIndex < 0) defaultIndex = 0;

@@ -1,9 +1,9 @@
 <?php
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -14,7 +14,6 @@ namespace BluePrint3D\SharedProductOptions\Model\Group;
 
 use Magento\Ui\DataProvider\AbstractDataProvider;
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\Group\CollectionFactory;
-// Updated reference to use your true surviving row collection factory
 use BluePrint3D\SharedProductOptions\Model\ResourceModel\Option\CollectionFactory as OptionCollectionFactory;
 
 class DataProvider extends AbstractDataProvider
@@ -47,8 +46,9 @@ class DataProvider extends AbstractDataProvider
 
         foreach ($items as $item) {
             $groupId = $item->getId();
+            $groupData = $item->getData();
 
-            // Load master option rows belonging to this group using our clean collection
+            // Load master option rows belonging to this group
             $optionCollection = $this->optionCollectionFactory->create();
             $optionCollection->addFieldToFilter('group_id', $groupId)
                 ->addFieldToFilter('parent_id', 0)
@@ -59,19 +59,16 @@ class DataProvider extends AbstractDataProvider
                 $optionId = $option->getId();
                 $optionType = $option->getData('type') ?: 'field';
 
-                $optionData = [
-                    'item_id'     => (int)$optionId,
-                    'type'        => $optionType,
-                    'title'       => $option->getData('title'),
-                    'price'       => $option->getData('price_modifier'),
-                    'sku'         => $option->getData('sku_modifier'),
-                    'position'    => (int)$option->getData('sort_order'),
-                    'is_required' => (int)$option->getData('is_required'),
-                    'placeholder' => $option->getData('placeholder'), // <-- THE FIX: Loads database value into UI component
-                    'values'      => []
-                ];
+                // B3D FIX: Pull all raw DB data so Pro fields are automatically included
+                $optionData = $option->getData();
 
-                // Query sub-options for both dropdown lists and multi-select fields
+                // Ensure core UI keys map correctly
+                $optionData['item_id']     = (int)$optionId;
+                $optionData['position']    = (int)$option->getData('sort_order');
+                $optionData['price']       = $option->getData('price_modifier');
+                $optionData['sku']         = $option->getData('sku_modifier');
+                $optionData['values']      = [];
+
                 if (in_array($optionType, ['drop_down', 'multiple'])) {
                     $subCollection = $this->optionCollectionFactory->create();
                     $subCollection->addFieldToFilter('parent_id', $optionId)
@@ -79,29 +76,41 @@ class DataProvider extends AbstractDataProvider
 
                     $subRows = [];
                     foreach ($subCollection as $subRow) {
-                        $subRows[] = [
-                            'value_id' => (int)$subRow->getId(),
-                            'title'    => $subRow->getData('title'),
-                            'price'    => $subRow->getData('price_modifier')
-                        ];
+                        // B3D FIX: Pull all raw DB data for sub-options too
+                        $subData = $subRow->getData();
+                        $subData['value_id'] = (int)$subRow->getId();
+                        $subData['price']    = $subRow->getData('price_modifier');
+
+                        $subRows[] = $subData;
                     }
-                    // Retain specific nest format so layout engine matches your configuration layout requirements
                     $optionData['values'] = ['values' => $subRows];
                 }
 
                 $optionRows[] = $optionData;
             }
 
+            // --- UI FORMATTING ---
+            // Convert database string "1,3" to array ["1", "3"] so the multiselect highlights correctly
+            $customerGroups = [];
+            if (!empty($groupData['customer_groups'])) {
+                $customerGroups = is_string($groupData['customer_groups'])
+                    ? explode(',', $groupData['customer_groups'])
+                    : $groupData['customer_groups'];
+            }
+            $groupData['customer_groups'] = $customerGroups;
+
             // Bind the formatted data back to the UI component mapping
             $this->loadedData[$groupId] = [
                 'group_id' => $groupId,
                 'title'    => $item->getData('title'),
-                'general'  => [
-                    'group_id' => $groupId,
-                    'title'    => $item->getData('title')
-                ],
+                'customer_groups' => $customerGroups,
+                'general'  => $groupData, // Automatically maps ALL db columns into the general fieldset
                 'option_values' => $optionRows
             ];
+
+            // Ensure title and group_id are explicitly available in the general array
+            $this->loadedData[$groupId]['general']['title'] = $item->getData('title');
+            $this->loadedData[$groupId]['general']['group_id'] = $groupId;
         }
 
         return $this->loadedData;

@@ -67,6 +67,14 @@
             </settings>
         </field>
 
+        <!-- NEW: Whitelist our hidden field so Magento allows it in the POST payload -->
+        <field name="assigned_products" formElement="hidden">
+            <settings>
+                <dataType>text</dataType>
+                <dataScope>assigned_products</dataScope>
+            </settings>
+        </field>
+
         <field name="title" formElement="input">
             <settings>
                 <dataType>text</dataType>

@@ -49,7 +49,7 @@ php bin/magento cache:flush</code></pre>
     <li>Navigate to the new <strong>Shared Option Groups</strong> section in your Magento Admin.</li>
     <li>Create a new Group (e.g., "Standard Add-ons") and add your desired custom options, values, and price modifiers.</li>
     <li>Go to <strong>Catalog &gt; Products</strong> and edit any product.</li>
-    <li>Expand the new <strong>Blueprint3D Shared Options</strong> fieldset.</li>
+    <li>Expand the new <strong>BluePrint3D Shared Options</strong> fieldset.</li>
     <li>Check the boxes for the option groups you want to assign and hit <strong>Save</strong>!</li>
 </ol>
 
