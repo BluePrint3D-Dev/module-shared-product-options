@@ -108,7 +108,7 @@ class Save extends Action
             $msg = __('Free Tier Limit Reached (6/6). You are growing fast! ') .
                 __('Upgrade to BluePrint3D Shared Options Pro to unlock unlimited groups, percentage pricing, ') .
                 __('targeted visibility, and dynamic image switching. ') .
-                __('Get your license today at: https://blueprint3d.dev/pro');
+                __('Get your license today at: https://blueprint3d.dev/#SPOP-Pro');
             $this->messageManager->addErrorMessage($msg);
             return $resultRedirect->setPath('*/*/');
         }
