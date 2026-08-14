@@ -22,7 +22,7 @@ class UpgradeButton implements ButtonProviderInterface
         return [
             'label' => __('⭐ Upgrade to Pro'),
             'class' => 'action-secondary',
-            'on_click' => "window.open('https://blueprint3d.dev/#SPOP-Pro', '_blank')",
+            'on_click' => "window.open('https://www.blueprint3d.dev/modules/shared-product-options-pro', '_blank')",
             'sort_order' => 20
         ];
     }
