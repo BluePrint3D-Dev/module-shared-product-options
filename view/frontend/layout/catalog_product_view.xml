@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
+ *
+ * This software is provided free of charge for personal or commercial use.
+ * Resale, redistribution, or sublicensing of this source code, modified or
+ * unmodified, for direct financial gain is strictly prohibited.
+ *
+ * @author    BluePrint3D Ltd <support@blueprint3d.dev>
+ * @copyright 2026 BluePrint3D Ltd (Company No. 13473806)
+ * @license   Custom Proprietary EULA (See LICENSE.txt)
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceBlock name="product.info.options.text">
+            <action method="setTemplate">
+                <argument name="template" xsi:type="string">BluePrint3D_SharedProductOptions::product/view/options/type/text.phtml</argument>
+            </action>
+        </referenceBlock>
+
+        <referenceBlock name="product.info.options.select">
+            <action method="setTemplate">
+                <argument name="template" xsi:type="string">BluePrint3D_SharedProductOptions::product/view/options/type/select.phtml</argument>
+            </action>
+        </referenceBlock>
+
+        <referenceContainer name="content">
+            <block class="Magento\Framework\View\Element\Text" name="shared.option.image.switcher">
+                <arguments>
+                    <argument name="text" xsi:type="string"><![CDATA[
+                        <script type="text/x-magento-init">
+                        {
+                            "*": {
+                                "sharedOptionImageSwitcher": {}
+                            }
+                        }
+                        </script>
+                    ]]></argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+    </body>
+</page>

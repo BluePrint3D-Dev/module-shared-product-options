@@ -170,7 +170,12 @@ class Save extends Action
     }
 
     /**
-     * Save option rows for the group
+     * Save option rows for the group.
+     *
+     * Updates rows in place (matched by item_id) instead of deleting everything up front,
+     * so a row's data is never lost just because it wasn't touched in a given save. Rows
+     * that genuinely no longer appear in the posted data are removed once the rest of the
+     * save has succeeded, and only among the IDs we can account for.
      *
      * @param int $groupId
      * @param array $optionValues
@@ -178,26 +183,34 @@ class Save extends Action
      */
     private function saveOptionValues(int $groupId, array $optionValues): void
     {
-        // Clear existing rows
-        $existingItems = $this->optionCollectionFactory->create()->addFieldToFilter('group_id', $groupId);
-        foreach ($existingItems as $existingItem) {
-            $existingItem->delete();
+        // A completely empty payload almost certainly means the sub-form failed to
+        // serialize rather than "the user deleted every row" - do nothing rather than
+        // risk wiping the group.
+        if (empty($optionValues)) {
+            return;
         }
 
         usort($optionValues, function ($a, $b) {
             return ((int)($a['position'] ?? 0)) <=> ((int)($b['position'] ?? 0));
         });
 
+        $keptItemIds = [];
         $position = 0;
+
         foreach ($optionValues as $row) {
             if (empty($row['title'])) {
                 continue;
             }
 
             $optionType = !empty($row['type']) ? $row['type'] : 'field';
+            $itemId = !empty($row['item_id']) ? (int)$row['item_id'] : 0;
 
             $optionModel = $this->optionFactory->create();
-            $optionModel->setData([
+            if ($itemId) {
+                $optionModel->load($itemId);
+            }
+
+            $optionModel->addData([
                 'group_id'       => $groupId,
                 'parent_id'      => 0,
                 'type'           => $optionType,
@@ -210,13 +223,14 @@ class Save extends Action
             ]);
 
             foreach ($row as $rKey => $rVal) {
-                if ($rKey !== 'item_id' && !is_array($rVal) && !$optionModel->hasData($rKey)) {
+                if ($rKey !== 'item_id' && !is_array($rVal)) {
                     $optionModel->setData($rKey, $rVal);
                 }
             }
 
             $optionModel->save();
-            $parentOptionId = $optionModel->getId();
+            $parentOptionId = (int)$optionModel->getId();
+            $keptItemIds[] = $parentOptionId;
 
             $subValues = [];
             if (isset($row['values']['values']) && is_array($row['values']['values'])) {
@@ -225,33 +239,63 @@ class Save extends Action
                 $subValues = $row['values'];
             }
 
-            if (in_array($optionType, ['drop_down', 'multiple']) && !empty($subValues)) {
-                $this->saveChildValues($groupId, $parentOptionId, $optionType, $subValues);
+            if (in_array($optionType, ['drop_down', 'multiple'])) {
+                if (!empty($subValues)) {
+                    $keptItemIds = array_merge(
+                        $keptItemIds,
+                        $this->saveChildValues($groupId, $parentOptionId, $optionType, $subValues)
+                    );
+                } elseif ($itemId) {
+                    // This row already existed and is a dropdown/multiselect, but no
+                    // values came through in this save - preserve whatever is already
+                    // stored rather than treating it as "delete all the values".
+                    $existingChildren = $this->optionCollectionFactory->create()
+                        ->addFieldToFilter('parent_id', $parentOptionId);
+                    foreach ($existingChildren as $existingChild) {
+                        $keptItemIds[] = (int)$existingChild->getId();
+                    }
+                }
+            }
+        }
+
+        // Remove only the rows that are genuinely no longer present in the posted data.
+        $existingItems = $this->optionCollectionFactory->create()->addFieldToFilter('group_id', $groupId);
+        foreach ($existingItems as $existingItem) {
+            if (!in_array((int)$existingItem->getId(), $keptItemIds, true)) {
+                $existingItem->delete();
             }
         }
     }
 
     /**
-     * Save child option values
+     * Save child option values, updating existing rows in place (matched by value_id).
      *
      * @param int $groupId
      * @param int $parentId
      * @param string $optionType
      * @param array $subValues
-     * @return void
+     * @return int[] IDs of the child rows that were saved, so the caller can protect them
+     *               from the top-level cleanup pass
      */
-    private function saveChildValues(int $groupId, int $parentId, string $optionType, array $subValues): void
+    private function saveChildValues(int $groupId, int $parentId, string $optionType, array $subValues): array
     {
+        $keptIds = [];
         $subPosition = 0;
+
         foreach ($subValues as $valueRow) {
             if (empty($valueRow['title'])) {
                 continue;
             }
 
             $childType = ($optionType === 'multiple') ? 'multiple_value' : 'drop_down_value';
+            $valueId = !empty($valueRow['value_id']) ? (int)$valueRow['value_id'] : 0;
 
             $valueModel = $this->optionFactory->create();
-            $valueModel->setData([
+            if ($valueId) {
+                $valueModel->load($valueId);
+            }
+
+            $valueModel->addData([
                 'group_id'       => $groupId,
                 'parent_id'      => $parentId,
                 'type'           => $childType,
@@ -262,13 +306,16 @@ class Save extends Action
             ]);
 
             foreach ($valueRow as $vrKey => $vrVal) {
-                if ($vrKey !== 'value_id' && !is_array($vrVal) && !$valueModel->hasData($vrKey)) {
+                if ($vrKey !== 'value_id' && !is_array($vrVal)) {
                     $valueModel->setData($vrKey, $vrVal);
                 }
             }
 
             $valueModel->save();
+            $keptIds[] = (int)$valueModel->getId();
         }
+
+        return $keptIds;
     }
 
     /**
