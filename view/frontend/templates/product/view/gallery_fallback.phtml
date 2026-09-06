@@ -1,0 +1,34 @@
+<?php
+/**
+ * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
+ *
+ * This software is provided free of charge for personal or commercial use.
+ * Resale, redistribution, or sublicensing of this source code, modified or
+ * unmodified, for direct financial gain is strictly prohibited.
+ *
+ * @author    BluePrint3D Ltd <support@blueprint3d.dev>
+ * @copyright 2026 BluePrint3D Ltd (Company No. 13473806)
+ * @license   Custom Proprietary EULA (See LICENSE.txt)
+ *
+ * @var \Magento\Framework\View\Element\Template $block
+ */
+
+// Re-emits the same gallery config Magento_Catalog's own gallery.phtml builds, via a
+// plain script tag (not text/x-magento-init) so it survives untouched even when the
+// native mage-init selector match fails to find the gallery placeholder in time. See
+// gallery-init-fallback.js, which only acts if the native widget never initialized.
+$galleryBlock = $block->getLayout()->getBlock('product.info.media.image');
+if (!$galleryBlock) {
+    return;
+}
+?>
+<script type="text/javascript">
+    window.b3dGalleryFallbackConfig = {
+        "mixins": ["magnifier/magnify"],
+        "magnifierOpts": <?= /* @noEscape */ $galleryBlock->getMagnifier() ?>,
+        "data": <?= /* @noEscape */ $galleryBlock->getGalleryImagesJson() ?>,
+        "options": <?= /* @noEscape */ $galleryBlock->getGalleryOptions()->getOptionsJson() ?>,
+        "fullscreen": <?= /* @noEscape */ $galleryBlock->getGalleryOptions()->getFSOptionsJson() ?>,
+        "breakpoints": <?= /* @noEscape */ $galleryBlock->getBreakpoints() ?>
+    };
+</script>

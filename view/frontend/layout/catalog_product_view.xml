@@ -33,13 +33,21 @@
                         <script type="text/x-magento-init">
                         {
                             "*": {
-                                "sharedOptionImageSwitcher": {}
+                                "sharedOptionImageSwitcher": {},
+                                "galleryInitFallback": {}
                             }
                         }
                         </script>
                     ]]></argument>
                 </arguments>
             </block>
+        </referenceContainer>
+
+        <referenceContainer name="product.info.media">
+            <block class="Magento\Framework\View\Element\Template"
+                    name="blueprint3d.gallery.fallback.data"
+                    template="BluePrint3D_SharedProductOptions::product/view/gallery_fallback.phtml"
+                    after="product.info.media.image"/>
         </referenceContainer>
     </body>
 </page>

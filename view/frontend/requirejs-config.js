@@ -12,7 +12,8 @@
 var config = {
     map: {
         '*': {
-            sharedOptionImageSwitcher: 'BluePrint3D_SharedProductOptions/js/option-image-switcher'
+            sharedOptionImageSwitcher: 'BluePrint3D_SharedProductOptions/js/option-image-switcher',
+            galleryInitFallback: 'BluePrint3D_SharedProductOptions/js/gallery-init-fallback'
         }
     }
 };
