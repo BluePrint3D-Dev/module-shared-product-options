@@ -106,8 +106,8 @@ class Save extends Action
         // --- FREE TIER LIMITATION CHECK ---
         if (!$id && $this->isLimitReached()) {
             $msg = __('Free Tier Limit Reached (6/6). You are growing fast! ') .
-                __('Upgrade to BluePrint3D Shared Options Pro to unlock unlimited groups, percentage pricing, ') .
-                __('targeted visibility, and dynamic image switching. ') .
+                __('Upgrade to Shared Product Options Pro to unlock unlimited groups, bulk product assignment, ') .
+                __('percentage pricing and customer-group targeted visibility. ') .
                 __('Get your license today at: https://blueprint3d.dev/#SPOP-Pro');
             $this->messageManager->addErrorMessage($msg);
             return $resultRedirect->setPath('*/*/');
@@ -195,6 +195,7 @@ class Save extends Action
         });
 
         $keptItemIds = [];
+        $childIdLists = [];
         $position = 0;
 
         foreach ($optionValues as $row) {
@@ -241,10 +242,7 @@ class Save extends Action
 
             if (in_array($optionType, ['drop_down', 'multiple'])) {
                 if (!empty($subValues)) {
-                    $keptItemIds = array_merge(
-                        $keptItemIds,
-                        $this->saveChildValues($groupId, $parentOptionId, $optionType, $subValues)
-                    );
+                    $childIdLists[] = $this->saveChildValues($groupId, $parentOptionId, $optionType, $subValues);
                 } elseif ($itemId) {
                     // This row already existed and is a dropdown/multiselect, but no
                     // values came through in this save - preserve whatever is already
@@ -257,6 +255,8 @@ class Save extends Action
                 }
             }
         }
+
+        $keptItemIds = array_merge($keptItemIds, ...$childIdLists);
 
         // Remove only the rows that are genuinely no longer present in the posted data.
         $existingItems = $this->optionCollectionFactory->create()->addFieldToFilter('group_id', $groupId);

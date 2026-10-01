@@ -1,8 +1,8 @@
 /**
  * Copyright (c) 2026 BluePrint3D Ltd. All rights reserved.
- * 
+ *
  * This software is provided free of charge for personal or commercial use.
- * Resale, redistribution, or sublicensing of this source code, modified or 
+ * Resale, redistribution, or sublicensing of this source code, modified or
  * unmodified, for direct financial gain is strictly prohibited.
  *
  * @author    BluePrint3D Ltd <support@blueprint3d.dev>
@@ -20,7 +20,9 @@ define([
 
     return function (config) {
         function initImageSwitcher() {
-            if (isSetup) return true;
+            if (isSetup) {
+                return true;
+            }
 
             var galleryElement = $('[data-gallery-role="gallery-placeholder"]');
             var galleryWidget = galleryElement.data('gallery');
@@ -41,7 +43,9 @@ define([
             isSetup = true;
 
             var defaultIndex = fotorama.activeframe ? fotorama.data.indexOf(fotorama.activeframe) : 0;
-            if (defaultIndex < 0) defaultIndex = 0;
+            if (defaultIndex < 0) {
+                defaultIndex = 0;
+            }
 
             // Target the custom option elements directly
             var $options = $('.product-custom-option');
@@ -51,13 +55,17 @@ define([
             $options.on('change.sharedOptionsImage', function () {
                 var targetLabel = '';
 
+                // Free-text options (text field, text area, date) never map to an image;
+                // without this, typing in one would reset the gallery to the base image.
+                if (!$(this).is('select, :radio, :checkbox')) {
+                    return;
+                }
+
                 if ($(this).is('select')) {
                     targetLabel = $(this).find('option:selected').data('option-label');
                 } else if ($(this).is(':checked')) {
                     targetLabel = $(this).data('option-label');
                 }
-
-                console.log("STU DEBUG: Option changed directly! Label text identified:", targetLabel);
 
                 // If they select back to the empty option prompt, return to base image
                 if (!targetLabel) {
@@ -77,8 +85,6 @@ define([
                         }
                     }
                 });
-
-                console.log("STU DEBUG: Gallery scanning index output:", matchedIndex);
 
                 // Command the slider frame to slide to the matched index
                 if (matchedIndex !== -1) {

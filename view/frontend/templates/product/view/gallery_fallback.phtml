@@ -11,6 +11,7 @@
  * @license   Custom Proprietary EULA (See LICENSE.txt)
  *
  * @var \Magento\Framework\View\Element\Template $block
+ * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
  */
 
 // Re-emits the same gallery config Magento_Catalog's own gallery.phtml builds, via a
@@ -21,14 +22,14 @@ $galleryBlock = $block->getLayout()->getBlock('product.info.media.image');
 if (!$galleryBlock) {
     return;
 }
+
+$script = 'window.b3dGalleryFallbackConfig = {'
+    . '"mixins": ["magnifier/magnify"],'
+    . '"magnifierOpts": ' . $galleryBlock->getMagnifier() . ','
+    . '"data": ' . $galleryBlock->getGalleryImagesJson() . ','
+    . '"options": ' . $galleryBlock->getGalleryOptions()->getOptionsJson() . ','
+    . '"fullscreen": ' . $galleryBlock->getGalleryOptions()->getFSOptionsJson() . ','
+    . '"breakpoints": ' . $galleryBlock->getBreakpoints()
+    . '};';
 ?>
-<script type="text/javascript">
-    window.b3dGalleryFallbackConfig = {
-        "mixins": ["magnifier/magnify"],
-        "magnifierOpts": <?= /* @noEscape */ $galleryBlock->getMagnifier() ?>,
-        "data": <?= /* @noEscape */ $galleryBlock->getGalleryImagesJson() ?>,
-        "options": <?= /* @noEscape */ $galleryBlock->getGalleryOptions()->getOptionsJson() ?>,
-        "fullscreen": <?= /* @noEscape */ $galleryBlock->getGalleryOptions()->getFSOptionsJson() ?>,
-        "breakpoints": <?= /* @noEscape */ $galleryBlock->getBreakpoints() ?>
-    };
-</script>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $script, false) ?>
