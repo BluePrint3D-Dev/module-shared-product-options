@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.6] - 2026-10-23
+### Fixed
+- Saving a product through the REST API (or any non-admin `ProductRepository::save`) failed with "The product can't be saved" when the product had shared option groups. The in-memory shared options were being written as real custom options and hit the `catalog_product_option_title` foreign key. They're now left out of the option save; native custom options save as before, and storefront, cart and REST checkout are unchanged.
+
 ## [1.0.5] - 2026-10-01
 ### Fixed
 - Free tier limit message now lists the features Pro actually adds (unlimited groups, bulk product assignment, percentage pricing, customer-group visibility).

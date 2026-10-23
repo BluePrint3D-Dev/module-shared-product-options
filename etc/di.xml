@@ -40,6 +40,12 @@
                 sortOrder="10"/>
     </type>
 
+    <!-- Keep injected shared options out of product option saves (REST/API product saves) -->
+    <type name="Magento\Catalog\Model\Product\Option\SaveHandler">
+        <plugin name="blueprint3d_shared_options_exclude_from_save"
+                type="BluePrint3D\SharedProductOptions\Plugin\ExcludeSharedOptionsFromSave"/>
+    </type>
+
     <!-- NEW: Intercept cart preparation to force option pre-hydration before native validation checks -->
     <type name="Magento\Catalog\Model\Product\Type\AbstractType">
         <plugin name="blueprint3d_shared_product_options_cart_prehydrate"

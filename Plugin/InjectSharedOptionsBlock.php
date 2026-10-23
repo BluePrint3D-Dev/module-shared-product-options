@@ -52,9 +52,10 @@ class InjectSharedOptionsBlock
     protected $appState;
 
     /**
-     * High integer offset to prevent database collisions
+     * High integer offset to prevent database collisions. Option IDs at or above
+     * this are injected shared options that must never be saved as real options.
      */
-    private const SHARED_OPTION_OFFSET = 999000;
+    public const SHARED_OPTION_OFFSET = 999000;
 
     /**
      * InjectSharedOptionsBlock constructor.
